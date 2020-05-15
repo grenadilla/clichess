@@ -1,5 +1,6 @@
 import berserk
-import curses
+import colorama
+from colorama import Fore, Back, Style
 import chess
 from config import Config
 
@@ -11,13 +12,6 @@ from config import Config
 # Chess boards are 8 x 8
 BOARD_SIZE = 8
 
-COLOR_LIGHT = 8
-COLOR_DARK = 9
-WHITE_ON_LIGHT = 10
-WHITE_ON_DARK = 11
-BLACK_ON_LIGHT = 12
-BLACK_ON_DARK = 13
-
 eventurl = "https://lichess.org/api/stream/event"
 
 
@@ -28,48 +22,22 @@ def stream():
         print(event)
 
 
-def set_colors():
-    if curses.can_change_color():
-        # Light
-        curses.init_color(COLOR_LIGHT, 240, 217, 181)
-        # Dark
-        curses.init_color(COLOR_DARK, 181, 136, 99)
-        # White on light
-        curses.init_pair(WHITE_ON_LIGHT, curses.COLOR_WHITE, COLOR_LIGHT)
-        # White on dark
-        curses.init_pair(WHITE_ON_DARK, curses.COLOR_WHITE, COLOR_DARK)
-        # Black on light
-        curses.init_pair(BLACK_ON_LIGHT, curses.COLOR_BLACK, COLOR_LIGHT)
-        # Black on dark
-        curses.init_pair(BLACK_ON_DARK, curses.COLOR_BLACK, COLOR_DARK)
-    else:
-        # White on light
-        curses.init_pair(WHITE_ON_LIGHT, curses.COLOR_WHITE,
-                         curses.COLOR_YELLOW)
-        # White on dark
-        curses.init_pair(WHITE_ON_DARK, curses.COLOR_WHITE, curses.COLOR_GREEN)
-        # Black on light
-        curses.init_pair(BLACK_ON_LIGHT, curses.COLOR_BLACK,
-                         curses.COLOR_YELLOW)
-        # Black on dark
-        curses.init_pair(BLACK_ON_DARK, curses.COLOR_BLACK, curses.COLOR_GREEN)
-
-
 # Given square position and color perspective, return curses color code
-def get_square_color(x, y, is_white):
+def print_square(x, y, piece, is_white):
     square_white = (x + y) % 2 == 1
-    if is_white:
-        if square_white:
-            return curses.color_pair(WHITE_ON_LIGHT)
-        return curses.color_pair(WHITE_ON_DARK)
     if square_white:
-        return curses.color_pair(BLACK_ON_LIGHT)
-    return curses.color_pair(BLACK_ON_DARK)
+        # White on light
+        print(Fore.BLACK + Back.WHITE + piece, end="")
+    else:
+        # White on dark
+        print(Fore.BLACK + Back.MAGENTA + piece, end="")
+    if x == 7:
+        print(Style.RESET_ALL)
 
 
 # Prints a chess board with top left corner at (start_x, start_y)
 # Flips the board if the player !is_white
-def print_board(window, board, start_x, start_y, is_white):
+def print_board(board, is_white):
     empty = 'O'
     board_string = board.unicode(invert_color=is_white, empty_square=empty)
     board_string = board_string.replace(' ', '')
@@ -79,26 +47,13 @@ def print_board(window, board, start_x, start_y, is_white):
             # times two since returns string with space between pieces
             # plus 1 from newline character
             if board_string[y * BOARD_SIZE + x] == empty:
-                window.addstr(start_y + y, start_x + x, ' ',
-                              get_square_color(x, y, is_white))
+                print_square(x, y, '\u2007', is_white)
             else:
-                window.addstr(start_y + y,
-                              start_x + x,
-                              board_string[y * BOARD_SIZE + x],
-                              get_square_color(x, y, is_white))
-
-
-def main(stdscr):
-    stdscr.clear()
-    set_colors()
-
-    board = chess.Board()
-    print_board(stdscr, board, 0, 0, True)
-
-    stdscr.refresh()
-    stdscr.getkey()
+                print_square(x, y, board_string[y * BOARD_SIZE + x], is_white)
 
 
 if __name__ == '__main__':
-    # stream()
-    curses.wrapper(main)
+    colorama.init()
+    board = chess.Board()
+    print_board(board, True)
+    print(Style.RESET_ALL)
