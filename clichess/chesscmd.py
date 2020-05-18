@@ -2,7 +2,7 @@ import cmd
 import chess
 import berserk
 import colorama
-from prettyprint import print_board
+from prettyprint import print_board, print_challenges
 from config import Config
 from data_streamer import DataStreamer
 
@@ -36,9 +36,8 @@ class ChessCmd(cmd.Cmd):
         # Get all challenges from queue and convert to local copy
         # to deal with thread issues
         self.challenges = list(self.data_streamer.challenges.queue)
-        for challenge in self.challenges:
-            print(challenge["id"])
-
+        print_challenges(self.challenges)
+    
     def do_exit(self, inp):
         '''Exit the application'''
         return True
