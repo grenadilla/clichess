@@ -43,11 +43,14 @@ class ChessCmd(cmd.Cmd):
     def do_accept(self, inp):
         '''Accept a challenge, either by index or challenge ID'''
         # Still have to implement deleting a challenge from the queue and list
+        challenge_id = None
         if (inp.isnumeric):
             index = int(inp)
-            self.client.challenges.accept(self.challenges[index]["id"])
+            challenge_id = self.challenges[index]["id"]
         else:
-            self.client.challenges.accept(inp)
+            challenge_id = inp
+        self.client.challenges.accept(challenge_id)
+        self.data_streamer.delete_challenge(challenge_id)
 
     def do_games(self, inp):
         '''List all games'''
