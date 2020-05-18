@@ -56,3 +56,23 @@ def print_challenges(challenges):
           + "Variant" + " " * 4 + "Rated Color  Perf")
     for index, challenge in enumerate(challenges):
         print_challenge(index, challenge)
+
+
+def print_game(index, game):
+    # game variable should be "gameFull" type, first line in stream
+    # Max 999 games. Definitely overkill
+    idx = (f"[{index}]").ljust(5)
+    game_id = game["id"].ljust(14)
+    variant = game["variant"]["name"].ljust(10)
+    rated = "Yes  " if game["rated"] else "No   "
+    white = game["white"]["name"].ljust(20)
+    black = game["black"]["name"].ljust(20)
+    perf = game["perf"]["name"]
+    print(f"{idx} {game_id} {white} {black} {variant} {rated} {perf}")
+
+
+def print_games(games):
+    print(" " * 6 + "ID" + " " * 13 + "White" + " " * 16 + "Black" + " " * 16
+          + "Variant" + " " * 4 + "Rated Perf")
+    for index, game in enumerate(games):
+        print_game(index, game)
