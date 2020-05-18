@@ -16,4 +16,8 @@ class DataStreamer(Thread):
             if event["type"] == "challenge":
                 self.challenges.put(event["challenge"])
             elif event["type"] == "gameStart":
-                self.games.put(event["game"])
+                for event in self.client.board.stream_game_state(
+                        event["game"]["id"]):
+                    if event["type"] == "gameFull":
+                        self.games.put(event)
+                        break
