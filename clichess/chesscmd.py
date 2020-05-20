@@ -32,7 +32,7 @@ class ChessCmd(cmd.Cmd):
         self.game = None
 
     def do_board(self, inp):
-        print_board(self.board, True)
+        print_board(self.board, False)
 
     def do_challenge(self, inp):
         challenge = self.client.challenges.create(username=inp, rated=False)
@@ -103,6 +103,7 @@ class ChessCmd(cmd.Cmd):
 if __name__ == '__main__':
     colorama.init()
     board = chess.Board()
+    board.push_san("e4")
     shell = ChessCmd(board)
     shell.cmdloop()
     colorama.deinit()

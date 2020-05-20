@@ -6,27 +6,41 @@ BOARD_SIZE = 8
 # Given square position and color perspective, return curses color code
 def print_square(x, y, piece, is_white):
     square_white = (x + y) % 2 == 0
+    # Note that \u2007 is a space and \ufe0f makes characters double width
     if square_white:
         # White on light
-        print(Fore.BLACK + Back.WHITE + '\u2007' + piece + '\u2007',
+        print(Fore.BLACK + Back.WHITE + '\u2007' + piece + '\ufe0f' + '\u2007',
               end="")
     else:
         # White on dark
-        print(Fore.BLACK + Back.MAGENTA + '\u2007' + piece + '\u2007',
-              end="")
+        print(Fore.BLACK + Back.MAGENTA + '\u2007' + piece + '\ufe0f'
+              + '\u2007', end="")
     if x == 7:
-        print(Style.RESET_ALL)
+        print(Style.RESET_ALL, end="")
 
 
-# Prints a chess board with top left corner at (start_x, start_y)
 # Flips the board if the player !is_white
 def print_board(board, is_white):
     empty = 'O'
-    invert = not is_white
-    board_string = board.unicode(invert_color=invert, empty_square=empty)
+    board_string = board.unicode(empty_square=empty)
+    if not is_white:
+        # Reverse the board string
+        board_string = board_string[::-1]
     board_string = board_string.replace(' ', '')
     board_string = board_string.replace('\n', '')
+
+    # Print letters on top
+    if is_white:
+        print("\u2009" + ("ABCDEFGH").replace("", "\ufe0f\u2007\u2007")[1:-1])
+    else:
+        print("\u2009" + ("HGFEDCBA").replace("", "\ufe0f\u2007\u2007")[1:-1])
+
     for y in range(0, BOARD_SIZE):
+        # Print numbers on left side
+        if is_white:
+            print(str(8 - y) + '\u2009', end="")
+        else:
+            print(str(y + 1) + '\u2009', end="")
         for x in range(0, BOARD_SIZE):
             # times two since returns string with space between pieces
             # plus 1 from newline character
@@ -35,6 +49,17 @@ def print_board(board, is_white):
                 print_square(x, y, "\u2007", is_white)
             else:
                 print_square(x, y, board_string[y * BOARD_SIZE + x], is_white)
+        # Print numbers on right side
+        if is_white:
+            print('\u2009' + str(8 - y))
+        else:
+            print('\u2009' + str(y + 1))
+
+    # Print letters on bottom
+    if is_white:
+        print("\u2009" + ("ABCDEFGH").replace("", "\ufe0f\u2007\u2007")[1:-1])
+    else:
+        print("\u2009" + ("HGFEDCBA").replace("", "\ufe0f\u2007\u2007")[1:-1])
 
 
 def print_challenge(index, challenge):
