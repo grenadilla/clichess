@@ -40,10 +40,21 @@ class ChessCmd(cmd.Cmd):
         print(self.account)
 
     def do_board(self, inp):
+        '''Updates the game and prints the board'''
         if self.game is None:
             print("Select a game")
             return
+        self.game.update_game(self.data_streamer.get_game(self.game.game_id))
         print_board(self.game.board, self.game.is_white)
+
+    def do_move(self, inp):
+        if self.game is None:
+            print("Select a game")
+            return
+        if not self.game.is_player_move():
+            print("It is not your move")
+        elif self.game.move_player(inp):
+            self.client.board.make_move(self.game.game_id, inp)
 
     def do_challenge(self, inp):
         challenge = self.client.challenges.create(username=inp, rated=False)

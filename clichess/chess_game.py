@@ -29,7 +29,18 @@ class ChessGame:
 
     def move_player(self, move):
         # TODO check move is legal
-        self.board.push_san(move)
-
-    def move_opponent(self, move):
         self.board.push_uci(move)
+        self.moves.append(move)
+        return True
+
+    def update_game(self, game_data):
+        new_moves = game_data["state"]["moves"].split(' ')
+        if new_moves[0] == '':
+            new_moves = []
+
+        # More moves have been made
+        if len(new_moves) > len(self.moves):
+            for i in range(len(self.moves), len(new_moves)):
+                self.board.push_uci(new_moves[i])
+            self.moves = new_moves
+            self.game_data = game_data
