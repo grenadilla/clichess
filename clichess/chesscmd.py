@@ -1,15 +1,17 @@
 import cmd
-import chess
 import berserk
 import colorama
 from prettyprint import print_board, print_challenges, print_games
 from config import Config
 from data_streamer import DataStreamer
+from chess_game import ChessGame
 
 
 class ChessCmd(cmd.Cmd):
-    def __init__(self, board):
+    def __init__(self):
         super(ChessCmd, self).__init__()
+
+        print("Logging in...")
 
         # Set prompt and intro
         self.prompt = "(clichess) "
@@ -18,8 +20,8 @@ class ChessCmd(cmd.Cmd):
         # Login
         self.session = berserk.TokenSession(Config.API_TOKEN)
         self.client = berserk.Client(self.session)
-
-        self.board = board
+        self.account = self.client.account.get()
+        self.username = self.account['username']
 
         # Set up data
         self.data_streamer = DataStreamer(self.client)
@@ -30,9 +32,18 @@ class ChessCmd(cmd.Cmd):
 
         # Current game viewing
         self.game = None
+        self.game_data = None
+        self.board = None
+
+    def do_account(self, inp):
+        # TODO add pretty printing
+        print(self.account)
 
     def do_board(self, inp):
-        print_board(self.board, False)
+        if self.game is None:
+            print("Select a game")
+            return
+        print_board(self.game.board, self.game.is_white)
 
     def do_challenge(self, inp):
         challenge = self.client.challenges.create(username=inp, rated=False)
@@ -55,11 +66,12 @@ class ChessCmd(cmd.Cmd):
             else:
                 print("Invalid game ID")
             if game_id is not None:
-                self.game = game_id
-                self.prompt = f"(clichess/{self.game}) "
+                self.game = ChessGame(self.username,
+                                      self.data_streamer.get_game(game_id))
+                self.prompt = f"(clichess/{self.game.game_id}) "
 
     def do_challenges(self, inp):
-        '''List all challenges'''
+        '''Refresh the list of challenges, then list all challenges'''
         # Get all challenges from queue and convert to local copy
         # to deal with thread issues
         self.challenges = list(self.data_streamer.challenges.queue)
@@ -89,7 +101,7 @@ class ChessCmd(cmd.Cmd):
                     print("There was an error accepting this challenge")
 
     def do_games(self, inp):
-        '''List all games'''
+        '''Refresh the list of games, then list all games'''
         self.games = list(self.data_streamer.games.queue)
         print_games(self.games)
 
@@ -102,8 +114,6 @@ class ChessCmd(cmd.Cmd):
 
 if __name__ == '__main__':
     colorama.init()
-    board = chess.Board()
-    board.push_san("e4")
-    shell = ChessCmd(board)
+    shell = ChessCmd()
     shell.cmdloop()
     colorama.deinit()

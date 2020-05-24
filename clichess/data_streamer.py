@@ -32,3 +32,8 @@ class DataStreamer(Thread):
                 break
             if challenge["id"] != challenge_id:
                 self.challenges.put(challenge)
+
+    def get_game(self, game_id):
+        for event in self.client.board.stream_game_state(game_id):
+            if event["type"] == "gameFull":
+                return event
