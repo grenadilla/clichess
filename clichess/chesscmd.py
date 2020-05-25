@@ -46,6 +46,10 @@ class ChessCmd(cmd.Cmd):
             return
         self.game.update_game(self.data_streamer.get_game(self.game.game_id))
         print_board(self.game.board, self.game.is_white)
+        if self.game.is_player_move():
+            print("It is your turn")
+        else:
+            print("Waiting for opponent to move")
 
     def do_move(self, inp):
         if self.game is None:
@@ -53,8 +57,9 @@ class ChessCmd(cmd.Cmd):
             return
         if not self.game.is_player_move():
             print("It is not your move")
-        elif self.game.move_player(inp):
-            self.client.board.make_move(self.game.game_id, inp)
+        else:
+            move = self.game.move_player(inp)
+            self.client.board.make_move(self.game.game_id, move)
 
     def do_challenge(self, inp):
         challenge = self.client.challenges.create(username=inp, rated=False)

@@ -27,11 +27,19 @@ class ChessGame:
     def is_player_move(self):
         return self.is_white == self.board.turn
 
-    def move_player(self, move):
-        # TODO check move is legal
-        self.board.push_uci(move)
-        self.moves.append(move)
-        return True
+    def move_player(self, move_str):
+        move = None
+        try:
+            move = self.board.parse_san(move_str)
+        except ValueError:
+            try:
+                move = self.board.parse_uci(move_str)
+            except ValueError:
+                print("Illegal move")
+
+        self.board.push_uci(move.uci())
+        self.moves.append(move.uci())
+        return move.uci()
 
     def update_game(self, game_data):
         new_moves = game_data["state"]["moves"].split(' ')
