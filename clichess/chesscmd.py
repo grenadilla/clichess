@@ -52,6 +52,7 @@ class ChessCmd(cmd.Cmd):
             print("Waiting for opponent to move")
 
     def do_move(self, inp):
+        '''Make a move in a game using SAN or UCI format, case sensitive'''
         if self.game is None:
             print("Select a game")
             return
@@ -61,6 +62,13 @@ class ChessCmd(cmd.Cmd):
             move = self.game.move_player(inp)
             if move is not None:
                 self.client.board.make_move(self.game.game_id, move)
+
+    def do_draw(self, inp):
+        '''Offer a draw in a game'''
+        if self.game is None:
+            print("Select a game")
+            return
+        self.client.board.offer_draw(self.game.game_id)
 
     def do_challenge(self, inp):
         challenge = self.client.challenges.create(username=inp, rated=False)

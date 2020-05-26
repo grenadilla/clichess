@@ -47,9 +47,7 @@ class ChessGame:
         if new_moves[0] == '':
             new_moves = []
 
-        # More moves have been made
-        if len(new_moves) > len(self.moves):
-            for i in range(len(self.moves), len(new_moves)):
-                self.board.push_uci(new_moves[i])
-            self.moves = new_moves
-            self.game_data = game_data
+        for i in range(len(self.moves), len(new_moves)):
+            self.board.push_uci(new_moves[i])
+        self.moves = new_moves
+        self.game_data = game_data
