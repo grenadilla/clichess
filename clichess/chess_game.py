@@ -36,6 +36,7 @@ class ChessGame:
                 move = self.board.parse_uci(move_str)
             except ValueError:
                 print("Illegal move")
+                return None
 
         self.board.push_uci(move.uci())
         self.moves.append(move.uci())

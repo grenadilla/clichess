@@ -59,7 +59,8 @@ class ChessCmd(cmd.Cmd):
             print("It is not your move")
         else:
             move = self.game.move_player(inp)
-            self.client.board.make_move(self.game.game_id, move)
+            if move is not None:
+                self.client.board.make_move(self.game.game_id, move)
 
     def do_challenge(self, inp):
         challenge = self.client.challenges.create(username=inp, rated=False)
