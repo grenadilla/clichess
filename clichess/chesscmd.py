@@ -59,7 +59,7 @@ class ChessCmd(cmd.Cmd):
         if not self.game.is_player_move():
             print("It is not your move")
         else:
-            move = self.game.move_player(inp)
+            move = self.game.move_player(args)
             if move is not None:
                 if not self.client.board.make_move(self.game.game_id, move):
                     print("There was an error making your move")
@@ -73,7 +73,39 @@ class ChessCmd(cmd.Cmd):
             print("There was an error while offering a draw")
 
     def do_challenge(self, args):
-        self.client.challenges.create(username=inp, rated=False):
+        args = args.split(' ')
+        username = args.pop(0)
+        rated = False
+        color = None
+        days = None
+        for arg in args:
+            arg = arg.lower()
+            arg = arg.split('=')
+            if arg[0] == 'rated':
+                rated = True
+            elif arg[0] == 'days':
+                if len(arg) < 2 or not arg[1].isnumeric():
+                    print("Please specify the number of days as a whole number")
+                    return
+                days = int(arg[1])
+                if days < 1 or days > 14:
+                    print("Days must be between 1 and 14 inclusive")
+                    return
+            elif arg[0] == 'color':
+                if len(arg) < 2:
+                    print("Please specify a color: white, black, or random")
+                    return
+                if arg[1] == 'white':
+                    color = 'white'
+                elif arg[1] == 'black':
+                    color = 'black'
+                elif arg[1] == 'random':
+                    color = None
+                else:
+                    print("Please specify a color: white, black, or random")
+                    return
+            
+        self.client.challenges.create(username=username, rated=rated, days=days, color=color)
 
     def do_game(self, args):
         '''Choose a game to play'''
@@ -82,7 +114,7 @@ class ChessCmd(cmd.Cmd):
         else:
             game_id = None
             if args.isnumeric():
-                index = int(inp)
+                index = int(args)
                 if index >= len(self.games):
                     print("Index out of bounds")
                 else:
@@ -110,7 +142,7 @@ class ChessCmd(cmd.Cmd):
         else:
             challenge_id = None
             if args.isnumeric():
-                index = int(inp)
+                index = int(args)
                 if index >= len(self.games):
                     print("Index out of bounds")
                 else:
@@ -133,7 +165,7 @@ class ChessCmd(cmd.Cmd):
         else:
             challenge_id = None
             if args.isnumeric():
-                index = int(inp)
+                index = int(args)
                 if index >= len(self.games):
                     print("Index out of bounds")
                 else:
@@ -152,7 +184,7 @@ class ChessCmd(cmd.Cmd):
     def do_games(self, args):
         '''Refresh the list of games, then list all games'''
         self.games = list(self.data_streamer.games.queue)
-        pretty_print.print_games(self.games)
+        prettyprint.print_games(self.games)
 
     def do_exit(self, args):
         '''Exit the application'''
