@@ -6,6 +6,7 @@ import asyncio
 from config import Config
 from data_streamer import DataStreamer
 from chess_game import ChessGame
+from lichess_client import APIClient
 
 
 class ChessCmd(cmd.Cmd):
@@ -25,7 +26,10 @@ class ChessCmd(cmd.Cmd):
         self.username = self.account['username']
 
         # Set up data and async
-        self.data_streamer = DataStreamer(self.client, asyncio.new_event_loop())
+        self.loop = asyncio.new_event_loop()
+        self.async_client = APIClient(token=Config.API_TOKEN, loop=self.loop)
+        self.data_streamer = DataStreamer(self.client, self.loop, self.async_client)
+        asyncio.run_coroutine_threadsafe(self.async_client.boards.write_in_chat("e0rDmdnhY07Q", "Coroutine!"), self.loop)
         self.data_streamer.setDaemon(True)
         self.data_streamer.start()
         self.challenges = []

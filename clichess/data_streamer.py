@@ -6,7 +6,7 @@ from lichess_client import APIClient
 from config import Config
 
 class DataStreamer(Thread):
-    def __init__(self, client, loop):
+    def __init__(self, client, loop, async_client):
         super(DataStreamer, self).__init__()
         self.client = client
 
@@ -15,6 +15,7 @@ class DataStreamer(Thread):
         self.games = Queue()
 
         self.loop = loop
+        self.async_client = async_client
         asyncio.set_event_loop(self.loop)
 
     def run(self):
@@ -30,7 +31,6 @@ class DataStreamer(Thread):
         self.loop.run_until_complete(self.stream_data())
     
     async def stream_data(self):
-        self.async_client = APIClient(token=Config.API_TOKEN)
         await asyncio.gather(self.stream_events(), self.stream_game("e0rDmdnhY07Q"))
 
     async def stream_game(self, id):
