@@ -29,7 +29,7 @@ class ChessCmd(cmd.Cmd):
         self.loop = asyncio.new_event_loop()
         self.async_client = APIClient(token=Config.API_TOKEN, loop=self.loop)
         self.data_streamer = DataStreamer(self.client, self.loop, self.async_client)
-        asyncio.run_coroutine_threadsafe(self.async_client.boards.write_in_chat("e0rDmdnhY07Q", "Coroutine!"), self.loop)
+        # asyncio.run_coroutine_threadsafe(self.async_client.boards.write_in_chat("e0rDmdnhY07Q", "Coroutine!"), self.loop)
         self.data_streamer.setDaemon(True)
         self.data_streamer.start()
         self.challenges = []
