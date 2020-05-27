@@ -1,9 +1,12 @@
 from threading import Thread
 from queue import Queue
-
+import asyncio
+import json
+from lichess_client import APIClient
+from config import Config
 
 class DataStreamer(Thread):
-    def __init__(self, client):
+    def __init__(self, client, loop):
         super(DataStreamer, self).__init__()
         self.client = client
 
@@ -11,8 +14,11 @@ class DataStreamer(Thread):
         self.challenges = Queue()
         self.games = Queue()
 
+        self.loop = loop
+        asyncio.set_event_loop(self.loop)
+
     def run(self):
-        for event in self.client.board.stream_incoming_events():
+        '''for event in self.client.board.stream_incoming_events():
             if event["type"] == "challenge":
                 self.challenges.put(event["challenge"])
             elif event["type"] == "gameStart":
@@ -20,7 +26,22 @@ class DataStreamer(Thread):
                         event["game"]["id"]):
                     if event["type"] == "gameFull":
                         self.games.put(event)
-                        break
+                        break'''
+        self.loop.run_until_complete(self.stream_data())
+    
+    async def stream_data(self):
+        self.async_client = APIClient(token=Config.API_TOKEN)
+        await asyncio.gather(self.stream_events(), self.stream_game("e0rDmdnhY07Q"))
+
+    async def stream_game(self, id):
+        async for response in self.async_client.boards.stream_game_state(game_id=id):
+            print(json.loads(response.entity.content))
+            
+        
+    async def stream_events(self):
+        async for response in self.async_client.boards.stream_incoming_events():
+            print(json.loads(response.entity.content))
+            
 
     def delete_challenge(self, challenge_id):
         # Delete a challenge from the queue given an ID

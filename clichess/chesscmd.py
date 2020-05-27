@@ -2,6 +2,7 @@ import cmd
 import berserk
 import colorama
 import prettyprint
+import asyncio
 from config import Config
 from data_streamer import DataStreamer
 from chess_game import ChessGame
@@ -23,8 +24,8 @@ class ChessCmd(cmd.Cmd):
         self.account = self.client.account.get()
         self.username = self.account['username']
 
-        # Set up data
-        self.data_streamer = DataStreamer(self.client)
+        # Set up data and async
+        self.data_streamer = DataStreamer(self.client, asyncio.new_event_loop())
         self.data_streamer.setDaemon(True)
         self.data_streamer.start()
         self.challenges = []
