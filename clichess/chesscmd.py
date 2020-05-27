@@ -143,7 +143,7 @@ class ChessCmd(cmd.Cmd):
             challenge_id = None
             if args.isnumeric():
                 index = int(args)
-                if index >= len(self.games):
+                if index >= len(self.challenges):
                     print("Index out of bounds")
                 else:
                     challenge_id = self.challenges[index]["id"]
@@ -166,7 +166,7 @@ class ChessCmd(cmd.Cmd):
             challenge_id = None
             if args.isnumeric():
                 index = int(args)
-                if index >= len(self.games):
+                if index >= len(self.challenges):
                     print("Index out of bounds")
                 else:
                     challenge_id = self.challenges[index]["id"]
