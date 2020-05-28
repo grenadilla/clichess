@@ -51,4 +51,4 @@ class ChessGame:
         for i in range(len(self.moves), len(new_moves)):
             self.board.push_uci(new_moves[i])
         self.moves = new_moves
-        self.game_data.state = game_data
+        self.game_data['state'] = game_data

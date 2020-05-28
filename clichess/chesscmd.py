@@ -56,7 +56,7 @@ class ChessCmd(cmd.Cmd):
             # update is tuple of (game_id, message)
             update = self.data_streamer.updates.get()
             if update[1]['type'] == 'gameState':
-                self.games[update[0]].update(update[1])
+                self.games[update[0]].update_game(update[1])
         return line
 
     def do_account(self, args):
@@ -64,7 +64,7 @@ class ChessCmd(cmd.Cmd):
         print(self.account)
 
     def do_board(self, args):
-        '''Updates the game and prints the board'''
+        '''Prints the board of the currently selected game'''
         if self.game is None:
             print("Select a game")
             return
@@ -84,15 +84,20 @@ class ChessCmd(cmd.Cmd):
         else:
             move = self.game.move_player(args)
             if move is not None:
-                if not self.client.board.make_move(self.game.game_id, move):
+                task = asyncio.run_coroutine_threadsafe(
+                    self.async_client.boards.make_move(game_id=self.game.game_id, move=move), self.loop) 
+                if task.result().entity.status != enums.StatusTypes.SUCCESS:
                     print("There was an error making your move")
-
+                    print(task.result())
+                
     def do_draw(self, args):
         '''Offer a draw in a game'''
         if self.game is None:
             print("Select a game")
             return
-        if not self.client.board.offer_draw(self.game.game_id):
+        task = asyncio.run_coroutine_threadsafe(
+                    self.async_client.boards.handle_draw(game_id=self.game.game_id, accept=True), self.loop)  
+        if task.result().entity.status != enums.StatusTypes.SUCCESS:
             print("There was an error while offering a draw")
 
     def do_challenge(self, args):
@@ -159,7 +164,7 @@ class ChessCmd(cmd.Cmd):
                 print("Invalid game ID")
 
     def do_challenges(self, args):
-        '''Refresh the list of challenges, then list all challenges'''
+        '''List all incoming challenges'''
         prettyprint.print_challenges(self.challenges)
 
     def do_accept(self, args):
@@ -180,7 +185,8 @@ class ChessCmd(cmd.Cmd):
             else:
                 print("Invalid challenge ID")
             if challenge_id is not None:
-                task = asyncio.run_coroutine_threadsafe(self.async_client.challenges.accept(challenge_id=challenge_id), self.loop)
+                task = asyncio.run_coroutine_threadsafe(
+                    self.async_client.challenges.accept(challenge_id=challenge_id), self.loop)
                 if task.result().entity.status == enums.StatusTypes.SUCCESS:
                     self.data_streamer.delete_challenge(challenge_id)
                 else:
@@ -211,7 +217,7 @@ class ChessCmd(cmd.Cmd):
                     print("There was an error declining this challenge")
 
     def do_games(self, args):
-        '''List all games'''
+        '''List all ongoing games'''
         prettyprint.print_games(list(self.games.values()))
 
     def do_exit(self, args):
