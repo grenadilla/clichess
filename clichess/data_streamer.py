@@ -12,6 +12,7 @@ class DataStreamer(Thread):
         # Use queue for thread safe
         self.challenges = Queue()
         self.games = Queue()
+        self.updates = Queue()
 
         self.loop = loop
         self.async_client = async_client
@@ -26,6 +27,10 @@ class DataStreamer(Thread):
             message = json.loads(response.entity.content)
             if message['type'] == 'gameFull':
                 self.games.put(message)
+                stream_game_id = message['id']
+            else:
+                # Send tuple of (game_id, message) as update
+                self.updates.put((stream_game_id, message))
         
     async def stream_events(self):
         async for response in self.async_client.boards.stream_incoming_events():

@@ -44,14 +44,19 @@ class ChessCmd(cmd.Cmd):
         self.board = None
 
     def precmd(self, line):
-        # Update games
         # Maybe change later for better way to take things out of queue
         # Think about using try except
+        while not self.data_streamer.challenges.empty():
+            challenge = self.data_streamer.challenges.get()
+            self.challenges.append(challenge)
         while not self.data_streamer.games.empty():
             new_game = self.data_streamer.games.get()
             self.games[new_game['id']] = ChessGame(self.username, new_game)
         while not self.data_streamer.updates.empty():
-            pass
+            # update is tuple of (game_id, message)
+            update = self.data_streamer.updates.get()
+            if update[1]['type'] == 'gameState':
+                self.games[update[0]].update(update[1])
         return line
 
     def do_account(self, args):
@@ -63,7 +68,6 @@ class ChessCmd(cmd.Cmd):
         if self.game is None:
             print("Select a game")
             return
-        self.game.update_game(self.data_streamer.get_game(self.game.game_id))
         prettyprint.print_board(self.game.board, self.game.is_white)
         if self.game.is_player_move():
             print("It is your turn")
@@ -156,9 +160,6 @@ class ChessCmd(cmd.Cmd):
 
     def do_challenges(self, args):
         '''Refresh the list of challenges, then list all challenges'''
-        # Get all challenges from queue and convert to local copy
-        # to deal with thread issues
-        self.challenges = list(self.data_streamer.challenges.queue)
         prettyprint.print_challenges(self.challenges)
 
     def do_accept(self, args):

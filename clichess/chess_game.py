@@ -43,11 +43,12 @@ class ChessGame:
         return move.uci()
 
     def update_game(self, game_data):
-        new_moves = game_data["state"]["moves"].split(' ')
+        assert game_data['type'] == 'gameState'
+        new_moves = game_data["moves"].split(' ')
         if new_moves[0] == '':
             new_moves = []
 
         for i in range(len(self.moves), len(new_moves)):
             self.board.push_uci(new_moves[i])
         self.moves = new_moves
-        self.game_data = game_data
+        self.game_data.state = game_data
