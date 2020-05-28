@@ -7,6 +7,7 @@ from config import Config
 from data_streamer import DataStreamer
 from chess_game import ChessGame
 from lichess_client import APIClient
+from lichess_client.utils import enums
 
 
 class ChessCmd(cmd.Cmd):
@@ -81,7 +82,7 @@ class ChessCmd(cmd.Cmd):
         args = args.split(' ')
         username = args.pop(0)
         rated = False
-        color = None
+        color = enums.ColorType.RANDOM
         days = None
         for arg in args:
             arg = arg.lower()
@@ -101,16 +102,24 @@ class ChessCmd(cmd.Cmd):
                     print("Please specify a color: white, black, or random")
                     return
                 if arg[1] == 'white':
-                    color = 'white'
+                    color = enums.ColorType.WHITE
                 elif arg[1] == 'black':
-                    color = 'black'
+                    color = enums.ColorType.BLACK
                 elif arg[1] == 'random':
-                    color = None
+                    color = enums.ColorType.RANDOM
                 else:
                     print("Please specify a color: white, black, or random")
                     return
-            
-        self.client.challenges.create(username=username, rated=rated, days=days, color=color)
+
+        task = asyncio.run_coroutine_threadsafe(
+                self.async_client.challenges.create(username=username,
+                                                    rated=rated,
+                                                    days=days,
+                                                    color=color), self.loop)
+
+        if task.result().entity.status != enums.StatusTypes.SUCCESS:
+            print("There was an error while creating this challenge")
+            print(task.result())
 
     def do_game(self, args):
         '''Choose a game to play'''
@@ -158,7 +167,8 @@ class ChessCmd(cmd.Cmd):
             else:
                 print("Invalid challenge ID")
             if challenge_id is not None:
-                if self.client.challenges.accept(challenge_id):
+                task = asyncio.run_coroutine_threadsafe(self.async_client.challenges.accept(challenge_id=challenge_id), self.loop)
+                if task.result().entity.status == enums.StatusTypes.SUCCESS:
                     self.data_streamer.delete_challenge(challenge_id)
                 else:
                     print("There was an error accepting this challenge")
@@ -181,7 +191,8 @@ class ChessCmd(cmd.Cmd):
             else:
                 print("Invalid challenge ID")
             if challenge_id is not None:
-                if self.client.challenges.decline(challenge_id):
+                task = asyncio.run_coroutine_threadsafe(self.async_client.challenges.decline(challenge_id=challenge_id), self.loop)
+                if task.result().entity.status == enums.StatusTypes.SUCCESS:
                     self.data_streamer.delete_challenge(challenge_id)
                 else:
                     print("There was an error declining this challenge")

@@ -23,17 +23,17 @@ class DataStreamer(Thread):
     async def stream_game(self, id):
         # Remember asyncio.gather to run functions concurrently
         async for response in self.async_client.boards.stream_game_state(game_id=id):
-            data = json.loads(response.entity.content)
-            print(data)
-            
+            message = json.loads(response.entity.content)
+            if message['type'] == 'gameFull':
+                self.games.put(message)
         
     async def stream_events(self):
         async for response in self.async_client.boards.stream_incoming_events():
-            data = json.loads(response.entity.content)
-            print(data)
-            if data['type'] == 'gameStart':
-                asyncio.ensure_future(self.stream_game(data['game']['id']))
-            
+            event = json.loads(response.entity.content)
+            if event['type'] == 'gameStart':
+                asyncio.ensure_future(self.stream_game(event['game']['id']))
+            elif event['type'] == 'challenge':
+                self.challenges.put(event['challenge'])
 
     def delete_challenge(self, challenge_id):
         # Delete a challenge from the queue given an ID
