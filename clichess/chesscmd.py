@@ -8,6 +8,7 @@ from data_streamer import DataStreamer
 from chess_game import ChessGame
 from lichess_client import APIClient
 from lichess_client.utils import enums
+from collections import OrderedDict
 
 
 class ChessCmd(cmd.Cmd):
@@ -34,12 +35,24 @@ class ChessCmd(cmd.Cmd):
         self.data_streamer.setDaemon(True)
         self.data_streamer.start()
         self.challenges = []
-        self.games = []
+        # Think about changing to dictionary
+        self.games = OrderedDict()
 
         # Current game viewing
         self.game = None
         self.game_data = None
         self.board = None
+
+    def precmd(self, line):
+        # Update games
+        # Maybe change later for better way to take things out of queue
+        # Think about using try except
+        while not self.data_streamer.games.empty():
+            new_game = self.data_streamer.games.get()
+            self.games[new_game['id']] = ChessGame(self.username, new_game)
+        while not self.data_streamer.updates.empty():
+            pass
+        return line
 
     def do_account(self, args):
         # TODO add pretty printing
@@ -126,21 +139,20 @@ class ChessCmd(cmd.Cmd):
         if args == "":
             print("Choose a game")
         else:
-            game_id = None
             if args.isnumeric():
                 index = int(args)
                 if index >= len(self.games):
                     print("Index out of bounds")
+                    return
                 else:
-                    game_id = self.games[index]["id"]
-            elif any(d["id"] == args for d in self.games):
-                game_id = args
+                    self.game = list(self.games.values())[index]
+                    self.prompt = f"(clichess/{self.game.game_id}) "
+                    return
+            elif args in self.games:
+                self.game = self.games[args]
+                self.prompt = f"(clichess/{self.game.game_id}) "
             else:
                 print("Invalid game ID")
-            if game_id is not None:
-                self.game = ChessGame(self.username,
-                                      self.data_streamer.get_game(game_id))
-                self.prompt = f"(clichess/{self.game.game_id}) "
 
     def do_challenges(self, args):
         '''Refresh the list of challenges, then list all challenges'''
@@ -198,9 +210,8 @@ class ChessCmd(cmd.Cmd):
                     print("There was an error declining this challenge")
 
     def do_games(self, args):
-        '''Refresh the list of games, then list all games'''
-        self.games = list(self.data_streamer.games.queue)
-        prettyprint.print_games(self.games)
+        '''List all games'''
+        prettyprint.print_games(list(self.games.values()))
 
     def do_exit(self, args):
         '''Exit the application'''

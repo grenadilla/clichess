@@ -100,4 +100,4 @@ def print_games(games):
     print(" " * 6 + "ID" + " " * 13 + "White" + " " * 16 + "Black" + " " * 16
           + "Variant" + " " * 4 + "Rated Perf")
     for index, game in enumerate(games):
-        print_game(index, game)
+        print_game(index, game.game_data)
