@@ -69,8 +69,7 @@ class ChessCmd(cmd.Cmd):
                 self.account = task.result().entity.content
                 self.username = self.account['username']
         else:
-            # TODO add pretty printing
-            print(self.account)
+            prettyprint.print_account(self.account)
 
     def do_board(self, args):
         '''Prints the board of the currently selected game'''

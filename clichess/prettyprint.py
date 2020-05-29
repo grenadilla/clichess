@@ -101,3 +101,29 @@ def print_games(games):
           + "Variant" + " " * 4 + "Rated Perf")
     for index, game in enumerate(games):
         print_game(index, game.game_data)
+
+def print_account(account):
+    print(account['username'])
+    bullet_string = ("Bullet" + " " * 9 +
+                    str(account['perfs']['bullet']['rating']).ljust(4) + 
+                    "   " + str(account['perfs']['bullet']['games']).ljust(5))
+    blitz_string = ('Blitz' + " " * 10 +
+                    str(account['perfs']['blitz']['rating']).ljust(4) + 
+                    "   " + str(account['perfs']['blitz']['games']).ljust(5))
+    rapid_string = ('Rapid' + " " * 10 +
+                    str(account['perfs']['rapid']['rating']).ljust(4) + 
+                    "   " + str(account['perfs']['rapid']['games']).ljust(5))
+    classical_string = ('Classical' + " " * 6 +
+                    str(account['perfs']['classical']['rating']).ljust(4) + 
+                    "   " + str(account['perfs']['classical']['games']).ljust(5))
+    correspondence_string = ('Correspondence ' +
+                    str(account['perfs']['correspondence']['rating']).ljust(4) + 
+                    "   " + str(account['perfs']['correspondence']['games']).ljust(5))
+    print("-" * max((len(bullet_string), len(blitz_string), len(rapid_string), 
+                    len(classical_string), len(correspondence_string))))
+    print("Variant" + " " * 8 + "Rating Games")
+    print(bullet_string)
+    print(blitz_string)
+    print(rapid_string)
+    print(classical_string)
+    print(correspondence_string)
