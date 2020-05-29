@@ -109,6 +109,14 @@ class ChessCmd(cmd.Cmd):
         if task.result().entity.status != enums.StatusTypes.SUCCESS:
             print("There was an error while offering a draw")
 
+    def help_challenge(self):
+        print(("Create a challenge.\n"
+            "Usage: challenge [username] [rated] [color=] [days=]\n"
+            "rated - Optional argument used to specify that the game is rated instead of unrated\n"
+            "color - Choose your color in the game. Defaults to random\n"
+            "days - Optional argument to choose a time limit between 1 and 14 days inclusive. "
+            "If not specified, game has unlimited time"))
+
     def do_challenge(self, args):
         args = args.split(' ')
         username = args.pop(0)
