@@ -1,8 +1,8 @@
 import cmd
-import berserk
 import colorama
 import prettyprint
 import asyncio
+import json
 from config import Config
 from data_streamer import DataStreamer
 from chess_game import ChessGame
@@ -17,31 +17,31 @@ class ChessCmd(cmd.Cmd):
 
         print("Logging in...")
 
+        # Set up login and async
+        self.loop = asyncio.new_event_loop()
+        self.client = APIClient(token=Config.API_TOKEN, loop=self.loop)
+        self.data_streamer = DataStreamer(self.client, self.loop)
+        self.data_streamer.setDaemon(True)
+        self.data_streamer.start()
+
+        self.challenges = []
+        self.games = OrderedDict()
+        self.game = None
+
         # Set prompt and intro
         self.prompt = "(clichess) "
         self.intro = "Welcome! Type help or ? for a list of commands."
 
-        # Login
-        self.session = berserk.TokenSession(Config.API_TOKEN)
-        self.client = berserk.Client(self.session)
-        self.account = self.client.account.get()
-        self.username = self.account['username']
-
-        # Set up data and async
-        self.loop = asyncio.new_event_loop()
-        self.async_client = APIClient(token=Config.API_TOKEN, loop=self.loop)
-        self.data_streamer = DataStreamer(self.client, self.loop, self.async_client)
-        # asyncio.run_coroutine_threadsafe(self.async_client.boards.write_in_chat("e0rDmdnhY07Q", "Coroutine!"), self.loop)
-        self.data_streamer.setDaemon(True)
-        self.data_streamer.start()
-        self.challenges = []
-        # Think about changing to dictionary
-        self.games = OrderedDict()
-
-        # Current game viewing
-        self.game = None
-        self.game_data = None
-        self.board = None
+        # Get account
+        task = asyncio.run_coroutine_threadsafe(
+                self.client.account.get_my_profile(), self.loop)
+        if task.result().entity.status != enums.StatusTypes.SUCCESS:
+            print("There was an error fetching your account data")
+            self.account = None
+            self.username = None
+        else:
+            self.account = task.result().entity.content
+            self.username = self.account['username']
 
     def precmd(self, line):
         # Maybe change later for better way to take things out of queue
@@ -60,8 +60,17 @@ class ChessCmd(cmd.Cmd):
         return line
 
     def do_account(self, args):
-        # TODO add pretty printing
-        print(self.account)
+        if self.account is None:
+            task = asyncio.run_coroutine_threadsafe(
+                self.client.account.get_my_profile(), self.loop)
+            if task.result().entity.status != enums.StatusTypes.SUCCESS:
+                print("There was an error fetching your account data")
+            else:
+                self.account = task.result().entity.content
+                self.username = self.account['username']
+        else:
+            # TODO add pretty printing
+            print(self.account)
 
     def do_board(self, args):
         '''Prints the board of the currently selected game'''
@@ -85,7 +94,7 @@ class ChessCmd(cmd.Cmd):
             move = self.game.move_player(args)
             if move is not None:
                 task = asyncio.run_coroutine_threadsafe(
-                    self.async_client.boards.make_move(game_id=self.game.game_id, move=move), self.loop) 
+                    self.client.boards.make_move(game_id=self.game.game_id, move=move), self.loop) 
                 if task.result().entity.status != enums.StatusTypes.SUCCESS:
                     print("There was an error making your move")
                     print(task.result())
@@ -96,7 +105,7 @@ class ChessCmd(cmd.Cmd):
             print("Select a game")
             return
         task = asyncio.run_coroutine_threadsafe(
-                    self.async_client.boards.handle_draw(game_id=self.game.game_id, accept=True), self.loop)  
+                    self.client.boards.handle_draw(game_id=self.game.game_id, accept=True), self.loop)
         if task.result().entity.status != enums.StatusTypes.SUCCESS:
             print("There was an error while offering a draw")
 
@@ -134,7 +143,7 @@ class ChessCmd(cmd.Cmd):
                     return
 
         task = asyncio.run_coroutine_threadsafe(
-                self.async_client.challenges.create(username=username,
+                self.client.challenges.create(username=username,
                                                     rated=rated,
                                                     days=days,
                                                     color=color), self.loop)
@@ -186,7 +195,7 @@ class ChessCmd(cmd.Cmd):
                 print("Invalid challenge ID")
             if challenge_id is not None:
                 task = asyncio.run_coroutine_threadsafe(
-                    self.async_client.challenges.accept(challenge_id=challenge_id), self.loop)
+                    self.client.challenges.accept(challenge_id=challenge_id), self.loop)
                 if task.result().entity.status == enums.StatusTypes.SUCCESS:
                     self.data_streamer.delete_challenge(challenge_id)
                 else:
@@ -210,7 +219,7 @@ class ChessCmd(cmd.Cmd):
             else:
                 print("Invalid challenge ID")
             if challenge_id is not None:
-                task = asyncio.run_coroutine_threadsafe(self.async_client.challenges.decline(challenge_id=challenge_id), self.loop)
+                task = asyncio.run_coroutine_threadsafe(self.client.challenges.decline(challenge_id=challenge_id), self.loop)
                 if task.result().entity.status == enums.StatusTypes.SUCCESS:
                     self.data_streamer.delete_challenge(challenge_id)
                 else:

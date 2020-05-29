@@ -5,25 +5,24 @@ import json
 from config import Config
 
 class DataStreamer(Thread):
-    def __init__(self, client, loop, async_client):
+    def __init__(self, client, loop):
         super(DataStreamer, self).__init__()
+
         self.client = client
+        self.loop = loop
+        asyncio.set_event_loop(self.loop)
 
         # Use queue for thread safe
         self.challenges = Queue()
         self.games = Queue()
         self.updates = Queue()
 
-        self.loop = loop
-        self.async_client = async_client
-        asyncio.set_event_loop(self.loop)
-
     def run(self):
         self.loop.run_until_complete(self.stream_events())
 
     async def stream_game(self, id):
         # Remember asyncio.gather to run functions concurrently
-        async for response in self.async_client.boards.stream_game_state(game_id=id):
+        async for response in self.client.boards.stream_game_state(game_id=id):
             message = json.loads(response.entity.content)
             if message['type'] == 'gameFull':
                 self.games.put(message)
@@ -33,7 +32,7 @@ class DataStreamer(Thread):
                 self.updates.put((stream_game_id, message))
         
     async def stream_events(self):
-        async for response in self.async_client.boards.stream_incoming_events():
+        async for response in self.client.boards.stream_incoming_events():
             event = json.loads(response.entity.content)
             if event['type'] == 'gameStart':
                 asyncio.ensure_future(self.stream_game(event['game']['id']))
@@ -50,8 +49,3 @@ class DataStreamer(Thread):
                 break
             if challenge["id"] != challenge_id:
                 self.challenges.put(challenge)
-
-    def get_game(self, game_id):
-        for event in self.client.board.stream_game_state(game_id):
-            if event["type"] == "gameFull":
-                return event
