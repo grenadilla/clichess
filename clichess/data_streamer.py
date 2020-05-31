@@ -3,6 +3,11 @@ from queue import Queue
 import asyncio
 import json
 from config import Config
+from datetime import datetime
+
+def decode_datetime_bits(response):
+    date_str = response.metadata.timestamp.decode("utf-8")
+    return datetime.strptime(date_str, "%a, %d %b %Y %X %Z")
 
 class DataStreamer(Thread):
     def __init__(self, client, loop):
@@ -24,12 +29,14 @@ class DataStreamer(Thread):
         # Remember asyncio.gather to run functions concurrently
         async for response in self.client.boards.stream_game_state(game_id=id):
             message = json.loads(response.entity.content)
+            date = decode_datetime_bits(response)
             if message['type'] == 'gameFull':
-                self.games.put(message)
+                # Send tuple of (message, date)
+                self.games.put((message, date))
                 stream_game_id = message['id']
             else:
-                # Send tuple of (game_id, message) as update
-                self.updates.put((stream_game_id, message))
+                # Send tuple of (game_id, message, date) as update
+                self.updates.put((stream_game_id, message, date))
         
     async def stream_events(self):
         async for response in self.client.boards.stream_incoming_events():

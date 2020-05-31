@@ -50,13 +50,13 @@ class ChessCmd(cmd.Cmd):
             challenge = self.data_streamer.challenges.get()
             self.challenges.append(challenge)
         while not self.data_streamer.games.empty():
-            new_game = self.data_streamer.games.get()
-            self.games[new_game['id']] = ChessGame(self.username, new_game)
+            new_game, date = self.data_streamer.games.get()
+            self.games[new_game['id']] = ChessGame(self.username, new_game, date)
         while not self.data_streamer.updates.empty():
             # update is tuple of (game_id, message)
-            update = self.data_streamer.updates.get()
-            if update[1]['type'] == 'gameState':
-                self.games[update[0]].update_game(update[1])
+            game_id, message, date = self.data_streamer.updates.get()
+            if message['type'] == 'gameState':
+                self.games[game_id].update_game(message, date)
         return line
 
     def do_account(self, args):
@@ -81,6 +81,12 @@ class ChessCmd(cmd.Cmd):
             print("It is your turn")
         else:
             print("Waiting for opponent to move")
+
+    def do_clock(self, args):
+        if self.game is None:
+            print("Select a game")
+            return
+        self.game.print_clock()
 
     def do_move(self, args):
         '''Make a move in a game using SAN or UCI format, case sensitive'''
