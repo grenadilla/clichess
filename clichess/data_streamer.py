@@ -45,14 +45,3 @@ class DataStreamer(Thread):
                 asyncio.ensure_future(self.stream_game(event['game']['id']))
             elif event['type'] == 'challenge':
                 self.challenges.put(event['challenge'])
-
-    def delete_challenge(self, challenge_id):
-        # Delete a challenge from the queue given an ID
-        # Use None as a sentinel value
-        self.challenges.put(None)
-        while True:
-            challenge = self.challenges.get()
-            if challenge is None:
-                break
-            if challenge["id"] != challenge_id:
-                self.challenges.put(challenge)

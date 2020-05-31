@@ -24,7 +24,7 @@ class ChessCmd(cmd.Cmd):
         self.data_streamer.setDaemon(True)
         self.data_streamer.start()
 
-        self.challenges = []
+        self.challenges = OrderedDict()
         self.games = OrderedDict()
         self.game = None
 
@@ -48,7 +48,7 @@ class ChessCmd(cmd.Cmd):
         # Think about using try except
         while not self.data_streamer.challenges.empty():
             challenge = self.data_streamer.challenges.get()
-            self.challenges.append(challenge)
+            self.challenges[challenge['id']] = challenge
         while not self.data_streamer.games.empty():
             new_game, date = self.data_streamer.games.get()
             self.games[new_game['id']] = ChessGame(self.username, new_game, date)
@@ -199,20 +199,20 @@ class ChessCmd(cmd.Cmd):
                 index = int(args)
                 if index >= len(self.challenges):
                     print("Index out of bounds")
+                    return
                 else:
-                    challenge_id = self.challenges[index]["id"]
-            # Maybe rewrite this; might be inneficient to keep generating
-            elif any(d["id"] == args for d in self.challenges):
+                    challenge_id = list(self.challenges.keys())[index]
+            elif args in self.challenges:
                 challenge_id = args
-            else:
-                print("Invalid challenge ID")
             if challenge_id is not None:
                 task = asyncio.run_coroutine_threadsafe(
                     self.client.challenges.accept(challenge_id=challenge_id), self.loop)
                 if task.result().entity.status == enums.StatusTypes.SUCCESS:
-                    self.data_streamer.delete_challenge(challenge_id)
+                    del self.challenges[challenge_id]
                 else:
                     print("There was an error accepting this challenge")
+            else:
+                print("Invalid challenge ID")
 
     def do_decline(self, args):
         '''Decline a challenge, either by index or challenge ID'''
@@ -224,19 +224,20 @@ class ChessCmd(cmd.Cmd):
                 index = int(args)
                 if index >= len(self.challenges):
                     print("Index out of bounds")
+                    return
                 else:
-                    challenge_id = self.challenges[index]["id"]
-            # Maybe rewrite this; might be inneficient to keep generating
-            elif any(d["id"] == args for d in self.challenges):
+                    challenge_id = list(self.challenges.keys())[index]
+            elif args in self.challenges:
                 challenge_id = args
-            else:
-                print("Invalid challenge ID")
             if challenge_id is not None:
-                task = asyncio.run_coroutine_threadsafe(self.client.challenges.decline(challenge_id=challenge_id), self.loop)
+                task = asyncio.run_coroutine_threadsafe(
+                    self.client.challenges.decline(challenge_id=challenge_id), self.loop)
                 if task.result().entity.status == enums.StatusTypes.SUCCESS:
-                    self.data_streamer.delete_challenge(challenge_id)
+                    del self.challenges[challenge_id]
                 else:
                     print("There was an error declining this challenge")
+            else:
+                print("Invalid challenge ID")
 
     def do_games(self, args):
         '''List all ongoing games'''

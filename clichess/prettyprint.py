@@ -79,7 +79,7 @@ def print_challenges(challenges):
     # Pretty print titles
     print(" " * 5 + "ID" + " " * 13 + "Challenger" + " " * 11
           + "Variant" + " " * 4 + "Rated Color  Perf")
-    for index, challenge in enumerate(challenges):
+    for index, challenge in enumerate(challenges.values()):
         print_challenge(index, challenge)
 
 
