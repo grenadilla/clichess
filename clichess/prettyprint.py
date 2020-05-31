@@ -1,4 +1,5 @@
 from colorama import Fore, Back, Style
+from datetime import timedelta
 
 BOARD_SIZE = 8
 
@@ -127,3 +128,30 @@ def print_account(account):
     print(rapid_string)
     print(classical_string)
     print(correspondence_string)
+
+def get_time(time):
+    time_str = ""
+    days = time.days
+    hours = int(time.seconds / 3600)
+    if days > 0:
+        if days == 1:
+            time_str += "1 day"
+        else:
+            time_str += f"{days} days"
+        if hours == 1:
+            time_str += ", 1 hour"
+        elif hours > 1:
+            time_str += f", {hours} hours"
+    else:
+        time_str = str(timedelta(seconds=time.seconds))
+    return time_str
+
+def print_clock(game):
+    white_time, black_time = game.get_clock()
+    print("White".ljust(20) + " " + "Black".ljust(20))
+    print(game.white.ljust(20) + " " + game.black.ljust(20))
+    print(get_time(white_time).ljust(20) + " " + get_time(black_time).ljust(20))
+    if game.is_player_move():
+        print("It is your turn")
+    else:
+        print("Waiting for your opponent to move")

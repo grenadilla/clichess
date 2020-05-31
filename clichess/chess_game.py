@@ -71,8 +71,3 @@ class ChessGame:
             if black_time < zero:
                 black_time = zero
         return (white_time, black_time)
-
-    def print_clock(self):
-        white_time, black_time = self.get_clock()
-        print(self.white + " " + self.black)
-        print(str(white_time) + " " + str(black_time))

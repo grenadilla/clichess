@@ -77,16 +77,13 @@ class ChessCmd(cmd.Cmd):
             print("Select a game")
             return
         prettyprint.print_board(self.game.board, self.game.is_white)
-        if self.game.is_player_move():
-            print("It is your turn")
-        else:
-            print("Waiting for opponent to move")
+        prettyprint.print_clock(self.game)
 
     def do_clock(self, args):
         if self.game is None:
             print("Select a game")
             return
-        self.game.print_clock()
+        prettyprint.print_clock(self.game)
 
     def do_move(self, args):
         '''Make a move in a game using SAN or UCI format, case sensitive'''
