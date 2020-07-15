@@ -77,6 +77,7 @@ class ChessCmd(cmd.Cmd):
         if self.game is None:
             print("Select a game")
             return
+        print(self.game.game_data["state"]["status"])
         prettyprint.print_board(self.game.board, self.game.is_white)
         prettyprint.print_clock(self.game)
 
@@ -91,9 +92,10 @@ class ChessCmd(cmd.Cmd):
         '''Make a move in a game using SAN or UCI format, case sensitive'''
         if self.game is None:
             print("Select a game")
-            return
-        if not self.game.is_player_move():
+        elif not self.game.is_player_move():
             print("It is not your move")
+        elif self.game.game_data["state"]["status"] != "started":
+            print("The game has finished")
         else:
             move = self.game.move_player(args)
             if move is not None:
@@ -108,6 +110,9 @@ class ChessCmd(cmd.Cmd):
         if self.game is None:
             print("Select a game")
             return
+        if self.game.game_data["state"]["status"] != "started":
+            print("The game has finished")
+            return
         task = asyncio.run_coroutine_threadsafe(
                     self.client.boards.handle_draw(game_id=self.game.game_id, accept=True), self.loop)
         if task.result().entity.status != enums.StatusTypes.SUCCESS:
@@ -118,6 +123,8 @@ class ChessCmd(cmd.Cmd):
         if self.game is None:
             print("Select a game")
             return
+        if self.game.game_data["state"]["status"] != "started":
+            print("The game has finished")
 
         response = ""
         while (len(response) > 0 and response[0] != 'y' and response[0] != 'n') or len(response) == 0:
