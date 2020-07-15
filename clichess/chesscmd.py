@@ -60,6 +60,7 @@ class ChessCmd(cmd.Cmd):
         return line
 
     def do_account(self, args):
+        '''Prints account and rating details'''
         if self.account is None:
             task = asyncio.run_coroutine_threadsafe(
                 self.client.account.get_my_profile(), self.loop)
@@ -80,6 +81,7 @@ class ChessCmd(cmd.Cmd):
         prettyprint.print_clock(self.game)
 
     def do_clock(self, args):
+        '''Prints clock information'''
         if self.game is None:
             print("Select a game")
             return
@@ -110,6 +112,22 @@ class ChessCmd(cmd.Cmd):
                     self.client.boards.handle_draw(game_id=self.game.game_id, accept=True), self.loop)
         if task.result().entity.status != enums.StatusTypes.SUCCESS:
             print("There was an error while offering a draw")
+
+    def do_resign(self, args):
+        '''Resign a game'''
+        if self.game is None:
+            print("Select a game")
+            return
+
+        response = ""
+        while (len(response) > 0 and response[0] != 'y' and response[0] != 'n') or len(response) == 0:
+            response = input("Are you sure you want to resign? [y/n]: ").lower()
+
+        if response[0] == 'y':
+            task = asyncio.run_coroutine_threadsafe(
+                    self.client.boards.resign_game(game_id=self.game.game_id), self.loop)
+            if task.result().entity.status != enums.StatusTypes.SUCCESS:
+                print("There was an error while resigning the game")
 
     def help_challenge(self):
         print(("Create a challenge.\n"
