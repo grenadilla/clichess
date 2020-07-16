@@ -152,7 +152,8 @@ def print_clock(game):
     print(game.white.ljust(20) + " " + game.black.ljust(20))
     print(get_time(white_time).ljust(20) + " " + get_time(black_time).ljust(20))
 
-    status = game.game_data["state"]["status"]
+    state = game.game_data["state"]
+    status = state["status"]
 
     if status == "started":
         if game.is_player_move():
@@ -162,19 +163,19 @@ def print_clock(game):
     elif status == "aborted":
         print("This game was aborted")
     elif status == "mate":
-        if (game["state"]["winner"] == "white"):
+        if (state["winner"] == "white"):
             print("Checkmate! White wins")
         else:
             print("Checkmate! Black wins")
     elif status == "resign":
-        if (game["state"]["winner"] == "white"):
+        if (state["winner"] == "white"):
             print("Black has resigned. White wins!")
-        else :
+        else:
             print("White has resigned. Black wins!")
     elif status == "draw":
         print("The players have decided on a draw")
     elif status == "outoftime":
-        if (game["state"]["winner"] == "white"):
+        if (state["winner"] == "white"):
             print("Black is out of time. White wins!")
         else:
             print("White is out of time. Black wins!")
